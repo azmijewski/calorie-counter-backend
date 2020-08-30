@@ -16,6 +16,11 @@ import java.util.List;
 @Data
 @Indexed
 @Entity
+@NamedQueries({
+        @NamedQuery(name = "product.FindAll", query = "select p from Product p")
+})
+
+
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

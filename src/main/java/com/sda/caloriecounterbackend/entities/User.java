@@ -13,6 +13,10 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Entity
+@NamedQueries({
+        @NamedQuery(name = "user.FindByUserName", query = "SELECT u from User u where u.username = :username")
+})
+
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

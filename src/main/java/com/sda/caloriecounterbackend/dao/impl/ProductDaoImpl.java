@@ -32,7 +32,7 @@ public class ProductDaoImpl implements ProductDao {
 
     @Override
     public Page<Product> findAll(int page, int size) {
-        Query query = em.createQuery("select p from Product p");
+        Query query = em.createNamedQuery("product.FindAll");
         long total = query.getResultList().size();
         query.setFirstResult(page * size);
         if (total != 0) {
