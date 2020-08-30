@@ -19,6 +19,7 @@ public class UserDto implements Serializable {
     private Double height;
     private Double calorie;
     private Integer age;
+    private String password;
 
 
 }

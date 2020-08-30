@@ -3,10 +3,13 @@ package com.sda.caloriecounterbackend.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @NoArgsConstructor
@@ -14,7 +17,8 @@ import java.util.List;
 @Data
 @Entity
 @NamedQueries({
-        @NamedQuery(name = "user.FindByUserName", query = "SELECT u from User u where u.username = :username")
+        @NamedQuery(name = "user.FindByUserName", query = "SELECT u from User u where u.username = :username"),
+        @NamedQuery(name = "user.FindByToken", query = "SELECT u from User u where u.token = :token")
 })
 
 public class User {
@@ -32,7 +36,10 @@ public class User {
     private String token;
     private Double height;
     private Double calorie;
-    private Integer age;
+    private LocalDate birthDate;
+    @CreationTimestamp
+    @Column(updatable = false)
+    private Date timestamp;
 
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     private List<UserProduct> userProducts = new ArrayList<>();

@@ -12,4 +12,5 @@ public interface UserDao {
     User save(User user);
     void modify(User user);
     void delete(User user);
+    Optional<User> findByToken(String token);
 }

@@ -61,4 +61,16 @@ public class UserDaoImpl implements UserDao {
     public void delete(User user) {
         em.remove(user);
     }
+
+    @Override
+    public Optional<User> findByToken(String token) {
+        Query query = em.createNamedQuery("user.FindByToken");
+        query.setParameter("token", token);
+        try {
+            User user = (User) query.getSingleResult();
+            return Optional.of(user);
+        } catch (NoResultException e){
+            return Optional.empty();
+        }
+    }
 }
