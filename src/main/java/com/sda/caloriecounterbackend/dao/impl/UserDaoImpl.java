@@ -29,7 +29,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public Optional<User> findByUsername(String username) {
-        Query query = em.createQuery("SELECT u from User u where u.username = :username");
+        Query query = em.createNamedQuery("user.FindByUserName");
         query.setParameter("username", username);
         User user;
         try {

@@ -12,6 +12,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Data
 @Entity
+@NamedQueries({
+        @NamedQuery(name = "userProduct.FindByDateAndUserName", query = "SELECT up FROM UserProduct up " +
+                "where up.date = :date and up.user.username = :username")})
+
 public class UserProduct {
 
     @EmbeddedId
