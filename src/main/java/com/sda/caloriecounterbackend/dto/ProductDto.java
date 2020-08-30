@@ -8,11 +8,12 @@ import org.hibernate.search.annotations.Field;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.io.Serializable;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class ProductDto {
+public class ProductDto implements Serializable {
     private Long id;
     private String name;
     private String brand;

@@ -28,6 +28,6 @@ public class CustomMailSender {
             log.error("Could not send mail: {}", e.getMessage());
         }
         mailSender.send(mimeMailMessage);
-        log.info("Mail send successfully to {}", sendTo);
+        log.info("Mail sent successfully to {}", sendTo);
     }
 }
