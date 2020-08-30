@@ -88,7 +88,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void confirm(String token) {
-
+        User userToConfirmed = userDao.findByToken(token)
+                .orElseThrow(() -> new UsernameNotFoundException("Could not find user with token: " + token));
+        userToConfirmed.setIsConfirmed(true);
+        userToConfirmed.setToken(null);
     }
 
     @Override
