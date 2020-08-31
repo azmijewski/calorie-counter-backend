@@ -1,12 +1,16 @@
 package com.sda.caloriecounterbackend.service.impl;
 
 import com.sda.caloriecounterbackend.dao.UserDao;
+import com.sda.caloriecounterbackend.dto.MailDataDto;
 import com.sda.caloriecounterbackend.dto.UserDto;
 import com.sda.caloriecounterbackend.entities.User;
 import com.sda.caloriecounterbackend.exception.IncorrectPasswordException;
+import com.sda.caloriecounterbackend.mapper.UserMapper;
 import com.sda.caloriecounterbackend.service.UserService;
 import com.sda.caloriecounterbackend.util.CustomMailSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -29,27 +34,35 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final String welcomeMessage;
     private final String welcomeTopic;
+    private final RabbitTemplate rabbitTemplate;
+    private final UserMapper userMapper;
 
     public UserServiceImpl(UserDao userDao, CustomMailSender customMailSender,
                            PasswordEncoder passwordEncoder,
                            @Value("${token-message}") String welcomeMessage,
-                           @Value("${token-topic}") String welcomeTopic) {
+                           @Value("${token-topic}") String welcomeTopic, RabbitTemplate rabbitTemplate,
+                           UserMapper userMapper) {
         this.userDao = userDao;
         this.customMailSender = customMailSender;
         this.passwordEncoder = passwordEncoder;
         this.welcomeMessage = welcomeMessage;
         this.welcomeTopic = welcomeTopic;
+        this.rabbitTemplate = rabbitTemplate;
+        this.userMapper = userMapper;
     }
 
     @Override
-    public User findById(Long userId) {
-        return userDao.findById(userId)
+    public UserDto findById(Long userId) {
+        User user = userDao.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Could not find user with id: " + userId));
+        return userMapper.mapToDto(user);
     }
 
     @Override
-    public List<User> findAll() {
-        return userDao.getAll();
+    public List<UserDto> findAll() {
+        return userDao.getAll().stream()
+                .map(userMapper::mapToDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -72,18 +85,22 @@ public class UserServiceImpl implements UserService {
         } else {
             throw new IncorrectPasswordException();
         }
-
     }
 
     @Override
-    public void register(User user) {
+    public void register(UserDto userDto) {
+        User user = userMapper.mapToDb(userDto);
         String token = UUID.randomUUID().toString();
         user.setToken(token);
         user.setIsConfirmed(false);
         String hashedPass = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPass);
         userDao.save(user);
-        //customMailSender.sendMail(user.getEmail(), welcomeTopic, prepareWelcomeMessage(token));
+        MailDataDto mailDataDto = new MailDataDto();
+        mailDataDto.setTo(user.getEmail());
+        mailDataDto.setTopic(welcomeTopic);
+        mailDataDto.setContent(prepareWelcomeMessage(token));
+        this.rabbitTemplate.convertAndSend("mailQueue", mailDataDto);
     }
 
     @Override
@@ -104,6 +121,11 @@ public class UserServiceImpl implements UserService {
         } else {
             throw new IncorrectPasswordException();
         }
+    }
+
+    @RabbitListener(queues = "mailQueue")
+    public void registerUserMailSender(MailDataDto mailDataDto) {
+        this.customMailSender.sendMail(mailDataDto.getTo(), mailDataDto.getTopic(), mailDataDto.getContent());
     }
 
     private User findByUsername(String username) {
