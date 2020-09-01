@@ -5,6 +5,7 @@ import com.sda.caloriecounterbackend.dto.MailDataDto;
 import com.sda.caloriecounterbackend.dto.UserDto;
 import com.sda.caloriecounterbackend.entities.User;
 import com.sda.caloriecounterbackend.exception.IncorrectPasswordException;
+import com.sda.caloriecounterbackend.exception.UserNotFoundException;
 import com.sda.caloriecounterbackend.mapper.UserMapper;
 import com.sda.caloriecounterbackend.service.UserService;
 import com.sda.caloriecounterbackend.util.CustomMailSender;
@@ -13,7 +14,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -52,9 +52,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto getUserByUsername(String username) {
+        User user = findByUsername(username);
+        return userMapper.mapToDto(user);
+    }
+
+    @Override
     public UserDto findById(Long userId) {
         User user = userDao.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("Could not find user with id: " + userId));
+                .orElseThrow(() -> new UserNotFoundException("Could not find user with id: " + userId));
         return userMapper.mapToDto(user);
     }
 
@@ -106,18 +112,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public void confirm(String token) {
         User userToConfirmed = userDao.findByToken(token)
-                .orElseThrow(() -> new UsernameNotFoundException("Could not find user with token: " + token));
+                .orElseThrow(() -> new UserNotFoundException("Could not find user with token: " + token));
         userToConfirmed.setIsConfirmed(true);
         userToConfirmed.setToken(null);
+        userDao.modify(userToConfirmed);
     }
 
     @Override
-    public void changePassword(String newPassword, String oldPassword,  String username) {
+    public void changePassword(String newPassword, String oldPassword, String username) {
         User userToChangePassword = findByUsername(username);
         if (passwordEncoder.matches(oldPassword, userToChangePassword.getPassword())) {
             String hashedPassword = passwordEncoder.encode(newPassword);
             userToChangePassword.setPassword(hashedPassword);
-            userDao.save(userToChangePassword);
+            userDao.modify(userToChangePassword);
         } else {
             throw new IncorrectPasswordException();
         }
@@ -130,8 +137,9 @@ public class UserServiceImpl implements UserService {
 
     private User findByUsername(String username) {
         return userDao.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Could not find user with username: " + username));
+                .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
     }
+
     private String prepareWelcomeMessage(String token) {
         return welcomeMessage.replace(FRONT_URL_REGEX, FRONT_URL + token);
     }

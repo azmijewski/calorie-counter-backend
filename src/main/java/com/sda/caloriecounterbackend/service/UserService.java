@@ -6,6 +6,8 @@ import com.sda.caloriecounterbackend.entities.User;
 import java.util.List;
 
 public interface UserService {
+
+    UserDto getUserByUsername(String username);
     UserDto findById(Long userId);
     List<UserDto> findAll();
     void modify(UserDto user, String username);
