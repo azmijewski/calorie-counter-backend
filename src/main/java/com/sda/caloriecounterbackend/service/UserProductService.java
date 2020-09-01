@@ -7,5 +7,5 @@ import java.time.LocalDate;
 
 public interface UserProductService {
     void addProduct(NewUserProductDto userProductDto, String username);
-    UserProductsListDto getAllByDate(LocalDate date);
+    UserProductsListDto getAllByDate(LocalDate date, String username);
 }

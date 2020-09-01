@@ -6,6 +6,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface UserProductDao {
-    List<UserProduct> findAllByDate(LocalDate localDate, String username);
+    List<UserProduct> findAllByDateAndUsername(LocalDate localDate, String username);
     UserProduct save(UserProduct userProduct);
 }

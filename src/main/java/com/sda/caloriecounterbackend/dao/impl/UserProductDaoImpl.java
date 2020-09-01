@@ -21,7 +21,7 @@ public class UserProductDaoImpl implements UserProductDao {
     }
 
     @Override
-    public List<UserProduct> findAllByDate(LocalDate localDate, String username) {
+    public List<UserProduct> findAllByDateAndUsername(LocalDate localDate, String username) {
         Query query = em.createNamedQuery("userProduct.FindByDateAndUserName");
         query.setParameter("date", localDate);
         query.setParameter("username", username);
