@@ -18,4 +18,12 @@ public interface ProductMapper {
     default void addWeightValue(@MappingTarget UserProductDto userProductDto, Double weight) {
         userProductDto.setWeight(weight);
     }
+    default void mapDataToUpdate(Product productToModify, ProductDto productDto) {
+        productToModify.setName(productDto.getName());
+        productToModify.setBrand(productDto.getBrand());
+        productToModify.setCalories(productDto.getCalories());
+        productToModify.setCarbohydrates(productDto.getCarbohydrates());
+        productToModify.setFat(productDto.getFat());
+        productToModify.setWhey(productDto.getWhey());
+    }
 }
