@@ -18,34 +18,35 @@ import java.net.URI;
 public class ProductController {
 
     private final ProductService productService;
-    private final ResponseUriBuilder responseUriBuilder;
 
-    public ProductController(ProductService productService, ResponseUriBuilder responseUriBuilder) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
-        this.responseUriBuilder = responseUriBuilder;
     }
 
     @GetMapping
     public ResponseEntity<Page<ProductDto>> getProductsPage(@RequestParam(name = "page") Integer page,
                                                             @RequestParam(name = "size") Integer size) {
-        Page<ProductDto> products = productService.getProductsPage(page, size);
-        return ResponseEntity.ok(products);
+        return productService.getProductsPage(page, size);
+
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
-        ProductDto productDto;
-        try {
-            productDto = productService.getById(id);
-        } catch (ProductNotFoundException e) {
-            log.error(e);
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(productDto);
+        return productService.getById(id);
     }
+
     @PostMapping
     public ResponseEntity<?> addProduct(@RequestBody @Valid ProductDto productDto) {
-        Long resultId = productService.save(productDto);
-        URI location = responseUriBuilder.buildUri(resultId);
-        return ResponseEntity.created(location).build();
+        return productService.save(productDto);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<?> modifyProduct(@PathVariable(name = "id") Long id,
+                                           @RequestBody @Valid ProductDto productDto) {
+        return productService.modify(id, productDto);
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        return productService.delete(id);
+    }
+
 }
