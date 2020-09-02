@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -19,12 +20,13 @@ public class HibernateSearchInit implements ApplicationListener<ContextRefreshed
 
     private final EntityManager em;
 
-    public HibernateSearchInit(EntityManagerFactory em) {
-        this.em = em.createEntityManager();
+    public HibernateSearchInit(EntityManager em) {
+        this.em = em;
     }
 
 
     @Override
+    @Transactional
     public void onApplicationEvent(ContextRefreshedEvent contextRefreshedEvent) {
         FullTextEntityManager fullTextEntityManager = Search.getFullTextEntityManager(em);
         log.debug("Start creating Hibernate Search Indexes");

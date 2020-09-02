@@ -1,6 +1,7 @@
 package com.sda.caloriecounterbackend.service.impl;
 
 import com.sda.caloriecounterbackend.dao.ProductDao;
+import com.sda.caloriecounterbackend.dao.ProductSearchDao;
 import com.sda.caloriecounterbackend.dto.ProductDto;
 import com.sda.caloriecounterbackend.entities.Product;
 import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
@@ -21,11 +22,13 @@ public class ProductServiceImpl implements ProductService {
     private final ProductDao productDao;
     private final ProductMapper productMapper;
     private final ResponseUriBuilder responseUriBuilder;
+    private final ProductSearchDao productSearchDao;
 
-    public ProductServiceImpl(ProductDao productDao, ProductMapper productMapper, ResponseUriBuilder responseUriBuilder) {
+    public ProductServiceImpl(ProductDao productDao, ProductMapper productMapper, ResponseUriBuilder responseUriBuilder, ProductSearchDao productSearchDao) {
         this.productDao = productDao;
         this.productMapper = productMapper;
         this.responseUriBuilder = responseUriBuilder;
+        this.productSearchDao = productSearchDao;
     }
 
     @Override
@@ -46,6 +49,13 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ResponseEntity<Page<ProductDto>> getProductsPage(int page, int size) {
         Page<ProductDto> products = productDao.findAll(page, size)
+                .map(productMapper::mapToDto);
+        return ResponseEntity.ok(products);
+    }
+
+    @Override
+    public ResponseEntity<Page<ProductDto>> searchProducts(int page, int size, String searchWords) {
+        Page<ProductDto> products = productSearchDao.findByCriteria(searchWords, page, size)
                 .map(productMapper::mapToDto);
         return ResponseEntity.ok(products);
     }

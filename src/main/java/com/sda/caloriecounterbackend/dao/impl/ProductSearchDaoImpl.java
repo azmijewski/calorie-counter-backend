@@ -31,17 +31,19 @@ public class ProductSearchDaoImpl implements ProductSearchDao {
     private static final String SEPARATOR = "\\s+";
 
 
-    private final FullTextEntityManager fullTextEntityManager;
+    private final EntityManager em;
 
-    public ProductSearchDaoImpl(EntityManagerFactory entityManager) {
-        this.fullTextEntityManager =
-                Search.getFullTextEntityManager(entityManager.createEntityManager());
+
+    public ProductSearchDaoImpl(EntityManager entityManager) {
+        this.em = entityManager;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<Product> findByCriteria(String search, int page, int size) {
         String[] searchWords = getSearchWords(search);
-        QueryBuilder queryBuilder = fullTextEntityManager.getSearchFactory()
+        QueryBuilder queryBuilder = Search.getFullTextEntityManager(this.em)
+                .getSearchFactory()
                 .buildQueryBuilder()
                 .forEntity(Product.class)
                 .get();
@@ -53,8 +55,8 @@ public class ProductSearchDaoImpl implements ProductSearchDao {
                     .createQuery();
             booleanQueryBuilder.add(query, BooleanClause.Occur.MUST);
         }
-        FullTextQuery jpaQuery =
-                fullTextEntityManager.createFullTextQuery(booleanQueryBuilder.build(), Product.class);
+        FullTextQuery jpaQuery = Search.getFullTextEntityManager(this.em)
+                .createFullTextQuery(booleanQueryBuilder.build(), Product.class);
         jpaQuery.setFirstResult(page * size);
         int totalSize = jpaQuery.getResultList().size();
         if (size != 0) {
