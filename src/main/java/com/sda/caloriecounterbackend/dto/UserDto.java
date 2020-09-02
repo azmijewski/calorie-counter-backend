@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 
 @NoArgsConstructor
@@ -18,7 +19,7 @@ public class UserDto implements Serializable {
     private Double weight;
     private Double height;
     private Double calorie;
-    private Integer age;
+    private LocalDate birthDate;
     private String password;
 
 
