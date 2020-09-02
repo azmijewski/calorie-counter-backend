@@ -82,10 +82,6 @@ public class UserDaoImpl implements UserDao {
         Query query = em.createNamedQuery("user.FindByLoginOrEmail");
         query.setParameter("username", login);
         query.setParameter("email", email);
-        if (query.getResultList().isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
+        return !query.getResultList().isEmpty();
     }
 }
