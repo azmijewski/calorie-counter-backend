@@ -2,18 +2,19 @@ package com.sda.caloriecounterbackend.service;
 
 import com.sda.caloriecounterbackend.dto.UserDto;
 import com.sda.caloriecounterbackend.entities.User;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface UserService {
 
-    UserDto getUserByUsername(String username);
+    ResponseEntity<UserDto> getUserByUsername(String username);
     UserDto findById(Long userId);
     List<UserDto> findAll();
-    void modify(UserDto user, String username);
-    void delete(String username, String password);
-    void register(UserDto user);
-    void confirm(String token);
-    void changePassword(String newPassword, String oldPassword, String username);
+    ResponseEntity<?> modify(UserDto user, String username);
+    ResponseEntity<?> delete(String username, String password);
+    ResponseEntity<?> register(UserDto user);
+    ResponseEntity<?> confirm(String token);
+    ResponseEntity<?> changePassword(String newPassword, String oldPassword, String username);
 
 }

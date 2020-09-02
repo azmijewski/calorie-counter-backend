@@ -17,7 +17,6 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("api/v1")
-@Log4j2
 public class UserController {
     private final UserService userService;
 
@@ -27,72 +26,37 @@ public class UserController {
 
     @PostMapping("/registration")
     public ResponseEntity<?> registerUser(@RequestBody @Valid UserDto userDto) {
-        try {
-            userService.register(userDto);
-        } catch (UsernameAlreadyExistException e) {
-            log.error(e);
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        return ResponseEntity.noContent().build();
+        return userService.register(userDto);
     }
+
     @PutMapping("/registration/{token}")
     public ResponseEntity<?> confirmRegistration(@PathVariable(name = "token") String token) {
-        try {
-            userService.confirm(token);
-        } catch (UserNotFoundException e) {
-            log.error(e);
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build();
+        return userService.confirm(token);
     }
+
     @GetMapping("/current-user")
     public ResponseEntity<UserDto> getUserData(Principal principal) {
-        UserDto userDto;
-        try {
-            userDto = userService.getUserByUsername(principal.getName());
-        } catch (UserNotFoundException e) {
-            log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        return ResponseEntity.ok(userDto);
+        return userService.getUserByUsername(principal.getName());
     }
+
     @PostMapping("/current-user")
     public ResponseEntity<?> deleteCurrentUser(Principal principal,
                                                @RequestBody @Valid DeleteAccountDto deleteAccountDto) {
-        try {
-            userService.delete(principal.getName(), deleteAccountDto.getPassword());
-        } catch (UserNotFoundException e) {
-            log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (IncorrectPasswordException e) {
-            log.error(e);
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        return ResponseEntity.noContent().build();
+        return userService.delete(principal.getName(), deleteAccountDto.getPassword());
     }
+
     @PutMapping("/current-user")
     public ResponseEntity<?> modifyUserData(Principal principal, @RequestBody @Valid UserDto userDto) {
-        try {
-            userService.modify(userDto, principal.getName());
-        } catch (UserNotFoundException e) {
-            log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        return ResponseEntity.notFound().build();
+
+        return userService.modify(userDto, principal.getName());
     }
+
     @PutMapping("/change-password")
     public ResponseEntity<?> changeCurrentUserPassword(Principal principal,
                                                        @RequestBody @Valid ChangePasswordDto changePasswordDto) {
-        try {
-            userService.changePassword(changePasswordDto.getNewPassword(),
-                    changePasswordDto.getOldPassword(), principal.getName());
-        } catch (UserNotFoundException e) {
-            log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        return ResponseEntity.noContent().build();
+        return userService.changePassword(changePasswordDto.getNewPassword(),
+                changePasswordDto.getOldPassword(), principal.getName());
     }
-
 
 
 }

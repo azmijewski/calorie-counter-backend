@@ -9,11 +9,14 @@ import com.sda.caloriecounterbackend.exception.UserNotFoundException;
 import com.sda.caloriecounterbackend.mapper.UserMapper;
 import com.sda.caloriecounterbackend.service.UserService;
 import com.sda.caloriecounterbackend.util.CustomMailSender;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
+@Log4j2
 @PropertySource("classpath:message.properties")
 public class UserServiceImpl implements UserService {
 
@@ -52,9 +55,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUserByUsername(String username) {
-        User user = findByUsername(username);
-        return userMapper.mapToDto(user);
+    public ResponseEntity<UserDto> getUserByUsername(String username) {
+        UserDto userDto;
+        try {
+            User user = findByUsername(username);
+            userDto = userMapper.mapToDto(user);
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok(userDto);
+
+
     }
 
     @Override
@@ -72,29 +84,46 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void modify(UserDto user, String username) {
-        User userToModify = findByUsername(username);
-        userToModify.setCalorie(user.getCalorie());
-        userToModify.setFirstName(user.getFirstName());
-        userToModify.setLastName(user.getLastName());
-        userToModify.setEmail(user.getEmail());
-        userToModify.setHeight(user.getHeight());
-        userToModify.setWeight(user.getWeight());
-        userDao.modify(userToModify);
-    }
-
-    @Override
-    public void delete(String username, String password) {
-        User userToDelete = findByUsername(username);
-        if (passwordEncoder.matches(password, userToDelete.getPassword())) {
-            userDao.delete(userToDelete);
-        } else {
-            throw new IncorrectPasswordException();
+    public ResponseEntity<?> modify(UserDto user, String username) {
+        try {
+            User userToModify = findByUsername(username);
+            userToModify.setCalorie(user.getCalorie());
+            userToModify.setFirstName(user.getFirstName());
+            userToModify.setLastName(user.getLastName());
+            userToModify.setEmail(user.getEmail());
+            userToModify.setHeight(user.getHeight());
+            userToModify.setWeight(user.getWeight());
+            userDao.modify(userToModify);
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+        return ResponseEntity.noContent().build();
+
     }
 
     @Override
-    public void register(UserDto userDto) {
+    public ResponseEntity<?> delete(String username, String password) {
+        try {
+            User userToDelete = findByUsername(username);
+            if (passwordEncoder.matches(password, userToDelete.getPassword())) {
+                userDao.delete(userToDelete);
+            } else {
+                throw new IncorrectPasswordException();
+            }
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IncorrectPasswordException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        return ResponseEntity.noContent().build();
+
+    }
+
+    @Override
+    public ResponseEntity<?> register(UserDto userDto) {
         User user = userMapper.mapToDb(userDto);
         String token = UUID.randomUUID().toString();
         user.setToken(token);
@@ -107,27 +136,43 @@ public class UserServiceImpl implements UserService {
         mailDataDto.setTopic(welcomeTopic);
         mailDataDto.setContent(prepareWelcomeMessage(token));
         this.rabbitTemplate.convertAndSend("mailQueue", mailDataDto);
+        return ResponseEntity.noContent().build();
     }
 
     @Override
-    public void confirm(String token) {
-        User userToConfirmed = userDao.findByToken(token)
-                .orElseThrow(() -> new UserNotFoundException("Could not find user with token: " + token));
-        userToConfirmed.setIsConfirmed(true);
-        userToConfirmed.setToken(null);
-        userDao.modify(userToConfirmed);
-    }
-
-    @Override
-    public void changePassword(String newPassword, String oldPassword, String username) {
-        User userToChangePassword = findByUsername(username);
-        if (passwordEncoder.matches(oldPassword, userToChangePassword.getPassword())) {
-            String hashedPassword = passwordEncoder.encode(newPassword);
-            userToChangePassword.setPassword(hashedPassword);
-            userDao.modify(userToChangePassword);
-        } else {
-            throw new IncorrectPasswordException();
+    public ResponseEntity<?> confirm(String token) {
+        try {
+            User userToConfirmed = userDao.findByToken(token)
+                    .orElseThrow(() -> new UserNotFoundException("Could not find user with token: " + token));
+            userToConfirmed.setIsConfirmed(true);
+            userToConfirmed.setToken(null);
+            userDao.modify(userToConfirmed);
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<?> changePassword(String newPassword, String oldPassword, String username) {
+        try {
+            User userToChangePassword = findByUsername(username);
+            if (passwordEncoder.matches(oldPassword, userToChangePassword.getPassword())) {
+                String hashedPassword = passwordEncoder.encode(newPassword);
+                userToChangePassword.setPassword(hashedPassword);
+                userDao.modify(userToChangePassword);
+            } else {
+                throw new IncorrectPasswordException();
+            }
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (IncorrectPasswordException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        return ResponseEntity.noContent().build();
     }
 
     @RabbitListener(queues = "mailQueue")
