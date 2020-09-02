@@ -124,6 +124,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> register(UserDto userDto) {
+        if(userDao.existByLoginOrMail(userDto.getUsername(), userDto.getEmail())){
+            log.error("User with login: {}, or email: {} already exist", userDto.getUsername(), userDto.getEmail());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
         User user = userMapper.mapToDb(userDto);
         String token = UUID.randomUUID().toString();
         user.setToken(token);

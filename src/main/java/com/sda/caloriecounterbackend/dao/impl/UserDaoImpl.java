@@ -47,17 +47,20 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
+    @Transactional
     public User save(User user) {
         em.persist(user);
         return user;
     }
 
     @Override
+    @Transactional
     public void modify(User user) {
         em.merge(user);
     }
 
     @Override
+    @Transactional
     public void delete(User user) {
         em.remove(user);
     }
@@ -71,6 +74,18 @@ public class UserDaoImpl implements UserDao {
             return Optional.of(user);
         } catch (NoResultException e){
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public Boolean existByLoginOrMail(String login, String email) {
+        Query query = em.createNamedQuery("user.FindByLoginOrEmail");
+        query.setParameter("username", login);
+        query.setParameter("email", email);
+        if (query.getResultList().isEmpty()) {
+            return false;
+        } else {
+            return true;
         }
     }
 }

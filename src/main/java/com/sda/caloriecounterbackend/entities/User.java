@@ -18,7 +18,8 @@ import java.util.List;
 @Entity
 @NamedQueries({
         @NamedQuery(name = "user.FindByUserName", query = "SELECT u from User u where u.username = :username"),
-        @NamedQuery(name = "user.FindByToken", query = "SELECT u from User u where u.token = :token")
+        @NamedQuery(name = "user.FindByToken", query = "SELECT u from User u where u.token = :token"),
+        @NamedQuery(name = "user.FindByLoginOrEmail", query = "SELECT u from User u where u.username = :username or u.email = :email")
 })
 
 public class User {

@@ -13,4 +13,5 @@ public interface UserDao {
     void modify(User user);
     void delete(User user);
     Optional<User> findByToken(String token);
+    Boolean existByLoginOrMail(String login, String email);
 }

@@ -29,6 +29,7 @@ public class UserProductDaoImpl implements UserProductDao {
     }
 
     @Override
+    @Transactional
     public UserProduct save(UserProduct userProduct) {
        em.persist(userProduct);
        return userProduct;
