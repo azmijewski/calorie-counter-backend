@@ -17,6 +17,7 @@ import java.security.Principal;
 
 @RestController
 @RequestMapping("api/v1")
+@CrossOrigin(origins = "*")
 public class UserController {
     private final UserService userService;
 

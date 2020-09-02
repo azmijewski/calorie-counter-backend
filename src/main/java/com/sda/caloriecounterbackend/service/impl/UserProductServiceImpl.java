@@ -13,6 +13,9 @@ import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
 import com.sda.caloriecounterbackend.exception.UserNotFoundException;
 import com.sda.caloriecounterbackend.mapper.ProductMapper;
 import com.sda.caloriecounterbackend.service.UserProductService;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Log4j2
 public class UserProductServiceImpl implements UserProductService {
 
     private final UserProductDao userProductDao;
@@ -35,34 +39,50 @@ public class UserProductServiceImpl implements UserProductService {
     }
 
     @Override
-    public void addProduct(NewUserProductDto userProductDto, String username) {
-        UserProduct userProduct = new UserProduct();
-        userProduct.setDate(userProductDto.getDate());
-        userProduct.setWeight(userProductDto.getWeight());
-        User user = userDao.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
-        Product product = productDao.findById(userProductDto.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + userProductDto.getProductId()));
-        userProduct.setProduct(product);
-        userProduct.setUser(user);
-        userProductDao.save(userProduct);
+    public ResponseEntity<?> addProduct(NewUserProductDto userProductDto, String username) {
+        try {
+            User user = userDao.findByUsername(username)
+                    .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
+            Product product = productDao.findById(userProductDto.getProductId())
+                    .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + userProductDto.getProductId()));
+            UserProduct userProduct = new UserProduct();
+            userProduct.setDate(userProductDto.getDate());
+            userProduct.setWeight(userProductDto.getWeight());
+            userProduct.setProduct(product);
+            userProduct.setUser(user);
+            userProductDao.save(userProduct);
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (ProductNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+
     }
 
     @Override
-    public UserProductsListDto getAllByDate(LocalDate date, String username) {
-        List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(date, username);
-        List<UserProductDto> products = mapProductsListWithCalculatedData(userProducts);
-        Double totalCalories = calculateCalories(products);
-        Double calorieGoal = userDao.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username))
-                .getCalorie();
-
+    public ResponseEntity<UserProductsListDto> getAllByDate(LocalDate date, String username) {
         UserProductsListDto userProductsListDto = new UserProductsListDto();
-        userProductsListDto.setCalorieGoal(calorieGoal);
-        userProductsListDto.setTotalCalories(totalCalories);
-        userProductsListDto.setDifference(calorieGoal - totalCalories);
-        userProductsListDto.setProducts(products);
-        return userProductsListDto;
+        try {
+            List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(date, username);
+            List<UserProductDto> products = mapProductsListWithCalculatedData(userProducts);
+            Double totalCalories = calculateCalories(products);
+            Double calorieGoal = userDao.findByUsername(username)
+                    .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username))
+                    .getCalorie();
+
+            userProductsListDto.setCalorieGoal(calorieGoal);
+            userProductsListDto.setTotalCalories(totalCalories);
+            userProductsListDto.setDifference(calorieGoal - totalCalories);
+            userProductsListDto.setProducts(products);
+        } catch (UserNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return ResponseEntity.ok(userProductsListDto);
     }
 
     private List<UserProductDto> mapProductsListWithCalculatedData(List<UserProduct> userProducts) {

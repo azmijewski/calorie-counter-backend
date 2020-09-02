@@ -1,20 +1,16 @@
 package com.sda.caloriecounterbackend.controller;
 
 import com.sda.caloriecounterbackend.dto.ProductDto;
-import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
 import com.sda.caloriecounterbackend.service.ProductService;
-import com.sda.caloriecounterbackend.util.ResponseUriBuilder;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.net.URI;
 
 @RestController
 @RequestMapping("api/v1/products")
-@Log4j2
+@CrossOrigin(origins = "*")
 public class ProductController {
 
     private final ProductService productService;
