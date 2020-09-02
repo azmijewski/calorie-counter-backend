@@ -11,6 +11,7 @@ import com.sda.caloriecounterbackend.entities.User;
 import com.sda.caloriecounterbackend.entities.UserProduct;
 import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
 import com.sda.caloriecounterbackend.exception.UserNotFoundException;
+import com.sda.caloriecounterbackend.mapper.DateMapper;
 import com.sda.caloriecounterbackend.mapper.ProductMapper;
 import com.sda.caloriecounterbackend.service.UserProductService;
 import lombok.extern.log4j.Log4j2;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -30,12 +32,15 @@ public class UserProductServiceImpl implements UserProductService {
     private final UserDao userDao;
     private final ProductDao productDao;
     private final ProductMapper productMapper;
+    private final DateMapper dateMapper;
 
-    public UserProductServiceImpl(UserProductDao userProductDao, UserDao userDao, ProductDao productDao, ProductMapper productMapper) {
+    public UserProductServiceImpl(UserProductDao userProductDao, UserDao userDao,
+                                  ProductDao productDao, ProductMapper productMapper, DateMapper dateMapper) {
         this.userProductDao = userProductDao;
         this.userDao = userDao;
         this.productDao = productDao;
         this.productMapper = productMapper;
+        this.dateMapper = dateMapper;
     }
 
     @Override
@@ -63,10 +68,11 @@ public class UserProductServiceImpl implements UserProductService {
     }
 
     @Override
-    public ResponseEntity<UserProductsListDto> getAllByDate(LocalDate date, String username) {
+    public ResponseEntity<UserProductsListDto> getAllByDate(Date date, String username) {
         UserProductsListDto userProductsListDto = new UserProductsListDto();
         try {
-            List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(date, username);
+            LocalDate localDate = dateMapper.mapToLocalDate(date);
+            List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(localDate, username);
             List<UserProductDto> products = mapProductsListWithCalculatedData(userProducts);
             Double totalCalories = calculateCalories(products);
             Double calorieGoal = userDao.findByUsername(username)
