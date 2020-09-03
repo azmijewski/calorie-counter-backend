@@ -5,6 +5,7 @@ import com.sda.caloriecounterbackend.dto.UserProductDto;
 import com.sda.caloriecounterbackend.entities.Product;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
@@ -12,6 +13,7 @@ public interface ProductMapper {
     ProductDto mapToDto(Product product);
     Product mapToDb(ProductDto productDto);
 
+    @Mapping(target = "productId", source = "product.id")
     UserProductDto mapToUserProductDto(Product product, Double weight);
 
     @AfterMapping

@@ -6,14 +6,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Min;
+import java.io.Serializable;
 import java.time.LocalDate;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class NewUserProductDto {
+public class ModifyUserProductDto implements Serializable {
     private Long productId;
     @Min(0)
-    private Double weight;
+    private Double newWeight;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
 }

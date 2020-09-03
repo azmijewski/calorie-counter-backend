@@ -1,5 +1,7 @@
 package com.sda.caloriecounterbackend.controller;
 
+import com.sda.caloriecounterbackend.dto.DeleteUserProductDto;
+import com.sda.caloriecounterbackend.dto.ModifyUserProductDto;
 import com.sda.caloriecounterbackend.dto.NewUserProductDto;
 import com.sda.caloriecounterbackend.dto.UserProductsListDto;
 import com.sda.caloriecounterbackend.service.UserProductService;
@@ -10,10 +12,9 @@ import javax.validation.Valid;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 
 @RestController
-@RequestMapping("api/v1")
+@RequestMapping("api/v1/calories")
 @CrossOrigin(origins = "*")
 public class UserProductController {
 
@@ -22,15 +23,25 @@ public class UserProductController {
     public UserProductController(UserProductService userProductService) {
         this.userProductService = userProductService;
     }
-    @GetMapping("/calories")
+    @GetMapping
     public ResponseEntity<UserProductsListDto> getCaloriesForDate(Principal principal,
                                                                   @RequestParam(name = "date") String date) {
         LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyy-MM-dd"));
         return userProductService.getAllByDate(localDate, principal.getName());
     }
-    @PostMapping("/calories")
+    @PostMapping
     public ResponseEntity<?> addCalorie(Principal principal,
                                         @RequestBody @Valid NewUserProductDto newUserProductDto) {
         return userProductService.addProduct(newUserProductDto, principal.getName());
+    }
+    @PostMapping("/remove")
+    public ResponseEntity<?> deleteUserProduct(Principal principal,
+                                               @RequestBody @Valid DeleteUserProductDto deleteUserProductDto) {
+        return userProductService.removeProduct(deleteUserProductDto, principal.getName());
+    }
+    @PutMapping
+    public ResponseEntity<?> editUserProductWeight(Principal principal,
+                                                   @RequestBody @Valid ModifyUserProductDto modifyUserProductDto) {
+        return userProductService.modifyUserProduct(modifyUserProductDto, principal.getName());
     }
 }

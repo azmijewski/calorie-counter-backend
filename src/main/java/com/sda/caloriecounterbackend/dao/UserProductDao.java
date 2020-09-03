@@ -11,4 +11,5 @@ public interface UserProductDao {
     UserProduct save(UserProduct userProduct);
     Optional<UserProduct> findByUsernameAndDateAndProductId(String username, LocalDate date, Long productId);
     void modify(UserProduct userProduct);
+    void remove(UserProduct userProduct);
 }

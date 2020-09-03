@@ -3,14 +3,13 @@ package com.sda.caloriecounterbackend.service.impl;
 import com.sda.caloriecounterbackend.dao.ProductDao;
 import com.sda.caloriecounterbackend.dao.UserDao;
 import com.sda.caloriecounterbackend.dao.UserProductDao;
-import com.sda.caloriecounterbackend.dto.NewUserProductDto;
-import com.sda.caloriecounterbackend.dto.UserProductDto;
-import com.sda.caloriecounterbackend.dto.UserProductsListDto;
+import com.sda.caloriecounterbackend.dto.*;
 import com.sda.caloriecounterbackend.entities.Product;
 import com.sda.caloriecounterbackend.entities.User;
 import com.sda.caloriecounterbackend.entities.UserProduct;
 import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
 import com.sda.caloriecounterbackend.exception.UserNotFoundException;
+import com.sda.caloriecounterbackend.exception.UserProductNotFoundException;
 import com.sda.caloriecounterbackend.mapper.ProductMapper;
 import com.sda.caloriecounterbackend.service.UserProductService;
 import lombok.extern.log4j.Log4j2;
@@ -61,24 +60,6 @@ public class UserProductServiceImpl implements UserProductService {
 
     }
 
-    private void editUserProduct(UserProduct userProduct, Double weight) {
-        userProduct.setWeight(userProduct.getWeight() + weight);
-        userProductDao.modify(userProduct);
-    }
-
-    private void addNewProduct(NewUserProductDto userProductDto, String username) {
-        User user = userDao.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
-        Product product = productDao.findById(userProductDto.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + userProductDto.getProductId()));
-        UserProduct userProduct = new UserProduct();
-        userProduct.getId().setDate(userProductDto.getDate());
-        userProduct.setWeight(userProductDto.getWeight());
-        userProduct.setProduct(product);
-        userProduct.setUser(user);
-        userProductDao.save(userProduct);
-    }
-
     @Override
     public ResponseEntity<UserProductsListDto> getAllByDate(LocalDate date, String username) {
         UserProductsListDto userProductsListDto = new UserProductsListDto();
@@ -100,6 +81,59 @@ public class UserProductServiceImpl implements UserProductService {
         }
 
         return ResponseEntity.ok(userProductsListDto);
+    }
+
+    @Override
+    public ResponseEntity<?> removeProduct(DeleteUserProductDto deleteUserProductDto, String username) {
+        try {
+            UserProduct userProduct
+                    = userProductDao.findByUsernameAndDateAndProductId(username, deleteUserProductDto.getDate(), deleteUserProductDto.getProductId())
+                    .orElseThrow(() -> new UserProductNotFoundException("Could not find user-product"));
+            userProductDao.remove(userProduct);
+        } catch (UserProductNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<?> modifyUserProduct(ModifyUserProductDto modifyUserProductDto, String username) {
+        if (modifyUserProductDto.getNewWeight() == 0) {
+            DeleteUserProductDto deleteUserProductDto = new DeleteUserProductDto();
+            deleteUserProductDto.setDate(modifyUserProductDto.getDate());
+            deleteUserProductDto.setProductId(modifyUserProductDto.getProductId());
+            return removeProduct(deleteUserProductDto, username);
+        }
+        try {
+            UserProduct userProduct
+                    = userProductDao.findByUsernameAndDateAndProductId(username, modifyUserProductDto.getDate(), modifyUserProductDto.getProductId())
+                    .orElseThrow(() -> new UserProductNotFoundException("Could not find user-product"));
+            userProduct.setWeight(modifyUserProductDto.getNewWeight());
+            userProductDao.modify(userProduct);
+        } catch (UserProductNotFoundException e) {
+            log.error(e);
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    private void editUserProduct(UserProduct userProduct, Double weight) {
+        userProduct.setWeight(userProduct.getWeight() + weight);
+        userProductDao.modify(userProduct);
+    }
+
+    private void addNewProduct(NewUserProductDto userProductDto, String username) {
+        User user = userDao.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
+        Product product = productDao.findById(userProductDto.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + userProductDto.getProductId()));
+        UserProduct userProduct = new UserProduct();
+        userProduct.getId().setDate(userProductDto.getDate());
+        userProduct.setWeight(userProductDto.getWeight());
+        userProduct.setProduct(product);
+        userProduct.setUser(user);
+        userProductDao.save(userProduct);
     }
 
     private List<UserProductDto> mapProductsListWithCalculatedData(List<UserProduct> userProducts) {

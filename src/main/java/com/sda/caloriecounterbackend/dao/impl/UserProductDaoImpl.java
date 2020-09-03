@@ -57,4 +57,10 @@ public class UserProductDaoImpl implements UserProductDao {
     public void modify(UserProduct userProduct) {
         em.merge(userProduct);
     }
+
+    @Override
+    @Transactional
+    public void remove(UserProduct userProduct) {
+        em.remove(userProduct);
+    }
 }

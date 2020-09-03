@@ -10,6 +10,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Data
 public class UserProductDto implements Serializable {
+    private Long productId;
     private String name;
     private String brand;
     private Double weight;
