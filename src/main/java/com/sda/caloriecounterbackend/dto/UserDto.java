@@ -1,5 +1,6 @@
 package com.sda.caloriecounterbackend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,8 @@ public class UserDto implements Serializable {
     private Double weight;
     private Double height;
     private Double calorie;
-    private Date birthDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate birthDate;
     private String password;
 
 

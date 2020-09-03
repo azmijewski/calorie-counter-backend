@@ -9,5 +9,5 @@ import java.util.Date;
 
 public interface UserProductService {
     ResponseEntity<?> addProduct(NewUserProductDto userProductDto, String username);
-    ResponseEntity<UserProductsListDto> getAllByDate(Date date, String username);
+    ResponseEntity<UserProductsListDto> getAllByDate(LocalDate date, String username);
 }

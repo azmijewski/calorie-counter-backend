@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @RestController
@@ -23,8 +24,9 @@ public class UserProductController {
     }
     @GetMapping("/calories")
     public ResponseEntity<UserProductsListDto> getCaloriesForDate(Principal principal,
-                                                                  @RequestParam(name = "date") Date date) {
-        return userProductService.getAllByDate(date, principal.getName());
+                                                                  @RequestParam(name = "date") String date) {
+        LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyy-MM-dd"));
+        return userProductService.getAllByDate(localDate, principal.getName());
     }
     @PostMapping("/calories")
     public ResponseEntity<?> addCalorie(Principal principal,

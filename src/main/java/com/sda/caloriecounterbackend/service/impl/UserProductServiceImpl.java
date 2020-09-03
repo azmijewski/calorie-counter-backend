@@ -11,7 +11,6 @@ import com.sda.caloriecounterbackend.entities.User;
 import com.sda.caloriecounterbackend.entities.UserProduct;
 import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
 import com.sda.caloriecounterbackend.exception.UserNotFoundException;
-import com.sda.caloriecounterbackend.mapper.DateMapper;
 import com.sda.caloriecounterbackend.mapper.ProductMapper;
 import com.sda.caloriecounterbackend.service.UserProductService;
 import lombok.extern.log4j.Log4j2;
@@ -21,8 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Log4j2
@@ -32,30 +31,25 @@ public class UserProductServiceImpl implements UserProductService {
     private final UserDao userDao;
     private final ProductDao productDao;
     private final ProductMapper productMapper;
-    private final DateMapper dateMapper;
 
     public UserProductServiceImpl(UserProductDao userProductDao, UserDao userDao,
-                                  ProductDao productDao, ProductMapper productMapper, DateMapper dateMapper) {
+                                  ProductDao productDao, ProductMapper productMapper) {
         this.userProductDao = userProductDao;
         this.userDao = userDao;
         this.productDao = productDao;
         this.productMapper = productMapper;
-        this.dateMapper = dateMapper;
     }
 
     @Override
     public ResponseEntity<?> addProduct(NewUserProductDto userProductDto, String username) {
         try {
-            User user = userDao.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
-            Product product = productDao.findById(userProductDto.getProductId())
-                    .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + userProductDto.getProductId()));
-            UserProduct userProduct = new UserProduct();
-            userProduct.setDate(userProductDto.getDate());
-            userProduct.setWeight(userProductDto.getWeight());
-            userProduct.setProduct(product);
-            userProduct.setUser(user);
-            userProductDao.save(userProduct);
+            Optional<UserProduct> userProductInDb =
+                    userProductDao.findByUsernameAndDateAndProductId(username, userProductDto.getDate(), userProductDto.getProductId());
+            if (userProductInDb.isPresent()) {
+                editUserProduct(userProductInDb.get(), userProductDto.getWeight());
+            } else {
+                addNewProduct(userProductDto, username);
+            }
         } catch (UserNotFoundException e) {
             log.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -67,12 +61,29 @@ public class UserProductServiceImpl implements UserProductService {
 
     }
 
+    private void editUserProduct(UserProduct userProduct, Double weight) {
+        userProduct.setWeight(userProduct.getWeight() + weight);
+        userProductDao.modify(userProduct);
+    }
+
+    private void addNewProduct(NewUserProductDto userProductDto, String username) {
+        User user = userDao.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
+        Product product = productDao.findById(userProductDto.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + userProductDto.getProductId()));
+        UserProduct userProduct = new UserProduct();
+        userProduct.getId().setDate(userProductDto.getDate());
+        userProduct.setWeight(userProductDto.getWeight());
+        userProduct.setProduct(product);
+        userProduct.setUser(user);
+        userProductDao.save(userProduct);
+    }
+
     @Override
-    public ResponseEntity<UserProductsListDto> getAllByDate(Date date, String username) {
+    public ResponseEntity<UserProductsListDto> getAllByDate(LocalDate date, String username) {
         UserProductsListDto userProductsListDto = new UserProductsListDto();
         try {
-            LocalDate localDate = dateMapper.mapToLocalDate(date);
-            List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(localDate, username);
+            List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(date, username);
             List<UserProductDto> products = mapProductsListWithCalculatedData(userProducts);
             Double totalCalories = calculateCalories(products);
             Double calorieGoal = userDao.findByUsername(username)

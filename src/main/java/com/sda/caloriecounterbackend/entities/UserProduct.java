@@ -14,7 +14,10 @@ import java.time.LocalDate;
 @Entity
 @NamedQueries({
         @NamedQuery(name = "userProduct.FindByDateAndUserName", query = "SELECT up FROM UserProduct up " +
-                "where up.date = :date and up.user.username = :username")})
+                "where up.id.date = :date and up.user.username = :username"),
+        @NamedQuery(name = "userProduct.FindByProductAndDateAndUsername", query = "SELECT up from UserProduct up where " +
+                "up.product.id = :id and up.user.username = :username and up.id.date = :date")
+})
 
 public class UserProduct {
 
@@ -32,7 +35,7 @@ public class UserProduct {
     private Product product;
 
 
-    private LocalDate date;
+
     private Double weight;
 
 
@@ -44,5 +47,6 @@ public class UserProduct {
     public static class UserProductId implements Serializable {
         private Long userId;
         private Long productId;
+        private LocalDate date;
     }
 }

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @PropertySource("classpath:message.properties")
 public class UserServiceImpl implements UserService {
 
-    private static final String FRONT_URL = "http://localhost:4200/token/";
+    private static final String FRONT_URL = "http://localhost:4200/confirmation/";
     private static final String FRONT_URL_REGEX = "%front-link%";
 
     private final UserDao userDao;

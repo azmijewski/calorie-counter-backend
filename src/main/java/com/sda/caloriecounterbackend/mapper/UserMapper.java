@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import java.time.LocalDate;
 import java.util.Date;
 
-@Mapper(componentModel = "spring", uses = DateMapper.class)
+@Mapper(componentModel = "spring")
 public interface UserMapper {
     UserDto mapToDto(User user);
     User mapToDb(UserDto userDto);
