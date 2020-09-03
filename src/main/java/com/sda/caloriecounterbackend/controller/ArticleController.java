@@ -11,6 +11,7 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping("api/v1/articles")
+@CrossOrigin(origins = "*")
 public class ArticleController {
     private final ArticleService articleService;
 
