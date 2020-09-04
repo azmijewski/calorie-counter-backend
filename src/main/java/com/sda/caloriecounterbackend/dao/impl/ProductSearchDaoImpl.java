@@ -58,7 +58,7 @@ public class ProductSearchDaoImpl implements ProductSearchDao {
         FullTextQuery jpaQuery = Search.getFullTextEntityManager(this.em)
                 .createFullTextQuery(booleanQueryBuilder.build(), Product.class);
         jpaQuery.setFirstResult(page * size);
-        int totalSize = jpaQuery.getResultList().size();
+        int totalSize = jpaQuery.getResultSize();
         if (size != 0) {
             jpaQuery.setMaxResults(size);
         }
