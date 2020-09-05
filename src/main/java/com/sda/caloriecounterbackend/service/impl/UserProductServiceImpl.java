@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -65,12 +66,11 @@ public class UserProductServiceImpl implements UserProductService {
         UserProductsListDto userProductsListDto = new UserProductsListDto();
         try {
             List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(date, username);
-            List<UserProductDto> products = mapProductsListWithCalculatedData(userProducts);
-            Double totalCalories = calculateCalories(products);
             Double calorieGoal = userDao.findByUsername(username)
                     .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username))
                     .getCalorie();
-
+            List<UserProductDto> products = mapProductsListWithCalculatedData(userProducts);
+            Double totalCalories = calculateCalories(products);
             userProductsListDto.setCalorieGoal(calorieGoal);
             userProductsListDto.setTotalCalories(totalCalories);
             userProductsListDto.setDifference(calorieGoal - totalCalories);

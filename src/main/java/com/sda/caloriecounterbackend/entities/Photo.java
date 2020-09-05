@@ -24,4 +24,8 @@ public class Photo {
 
     @OneToMany(mappedBy = "photo", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<Article> articles = new ArrayList<>();
+
+    public Photo(byte[] bytes) {
+        this.bytes = bytes;
+    }
 }

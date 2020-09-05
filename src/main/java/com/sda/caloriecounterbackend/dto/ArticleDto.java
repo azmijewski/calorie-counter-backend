@@ -14,4 +14,8 @@ public class ArticleDto implements Serializable {
     private String title;
     private String content;
     private Long photoId;
+
+    public ArticleDto(Long photoId) {
+        this.photoId = photoId;
+    }
 }

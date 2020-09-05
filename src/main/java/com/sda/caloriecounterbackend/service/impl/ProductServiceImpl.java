@@ -10,6 +10,7 @@ import com.sda.caloriecounterbackend.service.ProductService;
 import com.sda.caloriecounterbackend.util.ResponseUriBuilder;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -59,9 +60,17 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseEntity<Page<ProductDto>> searchProducts(int page, int size, String search) {
-        String[] searchWords = getSearchWords(search);
-        Page<ProductDto> products = productSearchDao.findByCriteria(searchWords, page, size)
-                .map(productMapper::mapToDto);
+        Page<ProductDto> products;
+        try{
+            String[] searchWords = getSearchWords(search);
+            products = productSearchDao.findByCriteria(searchWords, page, size)
+                    .map(productMapper::mapToDto);
+        } catch (IllegalArgumentException e) {
+            log.error(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+
         return ResponseEntity.ok(products);
     }
 

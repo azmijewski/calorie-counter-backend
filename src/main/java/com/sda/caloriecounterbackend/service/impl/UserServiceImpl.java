@@ -33,20 +33,18 @@ public class UserServiceImpl implements UserService {
     private static final String FRONT_URL_REGEX = "%front-link%";
 
     private final UserDao userDao;
-    private final CustomMailSender customMailSender;
     private final PasswordEncoder passwordEncoder;
     private final String welcomeMessage;
     private final String welcomeTopic;
     private final RabbitTemplate rabbitTemplate;
     private final UserMapper userMapper;
 
-    public UserServiceImpl(UserDao userDao, CustomMailSender customMailSender,
+    public UserServiceImpl(UserDao userDao,
                            PasswordEncoder passwordEncoder,
                            @Value("${token-message}") String welcomeMessage,
                            @Value("${token-topic}") String welcomeTopic, RabbitTemplate rabbitTemplate,
                            UserMapper userMapper) {
         this.userDao = userDao;
-        this.customMailSender = customMailSender;
         this.passwordEncoder = passwordEncoder;
         this.welcomeMessage = welcomeMessage;
         this.welcomeTopic = welcomeTopic;
@@ -62,7 +60,7 @@ public class UserServiceImpl implements UserService {
             userDto = userMapper.mapToDto(user);
         } catch (UserNotFoundException e) {
             log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.ok(userDto);
 
@@ -96,7 +94,7 @@ public class UserServiceImpl implements UserService {
             userDao.modify(userToModify);
         } catch (UserNotFoundException e) {
             log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.noContent().build();
 
@@ -113,7 +111,7 @@ public class UserServiceImpl implements UserService {
             }
         } catch (UserNotFoundException e) {
             log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IncorrectPasswordException e) {
             log.error(e);
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -171,7 +169,7 @@ public class UserServiceImpl implements UserService {
             }
         } catch (UserNotFoundException e) {
             log.error(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IncorrectPasswordException e) {
             log.error(e);
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -179,10 +177,7 @@ public class UserServiceImpl implements UserService {
         return ResponseEntity.noContent().build();
     }
 
-    @RabbitListener(queues = "mailQueue")
-    public void registerUserMailSender(MailDataDto mailDataDto) {
-        this.customMailSender.sendMail(mailDataDto.getTo(), mailDataDto.getTopic(), mailDataDto.getContent());
-    }
+
 
     private User findByUsername(String username) {
         return userDao.findByUsername(username)
