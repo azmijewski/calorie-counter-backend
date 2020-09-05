@@ -40,15 +40,14 @@ public class ProductSearchDaoImpl implements ProductSearchDao {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Product> findByCriteria(String search, int page, int size) {
-        String[] searchWords = getSearchWords(search);
+    public Page<Product> findByCriteria(String[] search, int page, int size) {
         QueryBuilder queryBuilder = Search.getFullTextEntityManager(this.em)
                 .getSearchFactory()
                 .buildQueryBuilder()
                 .forEntity(Product.class)
                 .get();
         BooleanQuery.Builder booleanQueryBuilder = new BooleanQuery.Builder();
-        for (String searchWord : searchWords) {
+        for (String searchWord : search) {
             Query query = queryBuilder.keyword()
                     .onFields(NAME, BRAND)
                     .matching(searchWord)
@@ -65,22 +64,6 @@ public class ProductSearchDaoImpl implements ProductSearchDao {
         return createPageResponse(jpaQuery.getResultList(), page, size, totalSize);
     }
 
-
-    private String[] getSearchWords(String search) {
-        String[] wordsToSearch = StringUtils.split(search, SEPARATOR);
-        if(Objects.isNull(wordsToSearch)) {
-            wordsToSearch = new String[] {search};
-        }
-        validateSearchWords(wordsToSearch);
-        return wordsToSearch;
-    }
-    private void validateSearchWords(String[] searchWords) {
-        for (String searchWord : searchWords) {
-            if (searchWord.matches(SEPARATOR)) {
-                throw new IllegalArgumentException("Search word: " + searchWord + " is invalid");
-            }
-        }
-    }
     private   Page<Product> createPageResponse(List<Product> data, int page, int size, int totalSize ) {
         Pageable pageable = PageRequest.of(page, size);
         return new PageImpl<>(data, pageable, totalSize);

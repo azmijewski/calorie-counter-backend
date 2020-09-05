@@ -19,7 +19,8 @@ import java.util.List;
 @NamedQueries({
         @NamedQuery(name = "user.FindByUserName", query = "SELECT u from User u where u.username = :username"),
         @NamedQuery(name = "user.FindByToken", query = "SELECT u from User u where u.token = :token"),
-        @NamedQuery(name = "user.FindByLoginOrEmail", query = "SELECT u from User u where u.username = :username or u.email = :email")
+        @NamedQuery(name = "user.FindByLoginOrEmail", query = "SELECT u from User u where u.username = :username or u.email = :email"),
+        @NamedQuery(name = "user.FindAll", query = "SELECT u from User u")
 })
 
 public class User {

@@ -12,12 +12,16 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
+import java.util.Objects;
 
 @Service
 @Log4j2
 public class ProductServiceImpl implements ProductService {
+
+    private static final String SEPARATOR = "\\s+";
 
     private final ProductDao productDao;
     private final ProductMapper productMapper;
@@ -54,7 +58,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ResponseEntity<Page<ProductDto>> searchProducts(int page, int size, String searchWords) {
+    public ResponseEntity<Page<ProductDto>> searchProducts(int page, int size, String search) {
+        String[] searchWords = getSearchWords(search);
         Page<ProductDto> products = productSearchDao.findByCriteria(searchWords, page, size)
                 .map(productMapper::mapToDto);
         return ResponseEntity.ok(products);
@@ -94,6 +99,21 @@ public class ProductServiceImpl implements ProductService {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
+    }
+    private String[] getSearchWords(String search) {
+        String[] wordsToSearch = StringUtils.split(search, SEPARATOR);
+        if(Objects.isNull(wordsToSearch)) {
+            wordsToSearch = new String[] {search};
+        }
+        validateSearchWords(wordsToSearch);
+        return wordsToSearch;
+    }
+    private void validateSearchWords(String[] searchWords) {
+        for (String searchWord : searchWords) {
+            if (searchWord.matches(SEPARATOR)) {
+                throw new IllegalArgumentException("Search word: " + searchWord + " is invalid");
+            }
+        }
     }
 
 

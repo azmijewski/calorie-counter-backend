@@ -42,7 +42,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> getAll() {
-        Query query = em.createQuery("SELECT u from User u");
+        Query query = em.createNamedQuery("user.FindAll");
         return query.getResultList();
     }
 
@@ -82,6 +82,7 @@ public class UserDaoImpl implements UserDao {
         Query query = em.createNamedQuery("user.FindByLoginOrEmail");
         query.setParameter("username", login);
         query.setParameter("email", email);
-        return !query.getResultList().isEmpty();
+        List<User> users = query.getResultList();
+        return !users.isEmpty();
     }
 }
