@@ -1,9 +1,6 @@
 package com.sda.caloriecounterbackend.controller;
 
-import com.sda.caloriecounterbackend.dto.DeleteUserProductDto;
-import com.sda.caloriecounterbackend.dto.ModifyUserProductDto;
-import com.sda.caloriecounterbackend.dto.NewUserProductDto;
-import com.sda.caloriecounterbackend.dto.UserProductsListDto;
+import com.sda.caloriecounterbackend.dto.*;
 import com.sda.caloriecounterbackend.service.UserProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,5 +40,10 @@ public class UserProductController {
     public ResponseEntity<?> editUserProductWeight(Principal principal,
                                                    @RequestBody @Valid ModifyUserProductDto modifyUserProductDto) {
         return userProductService.modifyUserProduct(modifyUserProductDto, principal.getName());
+    }
+    @PostMapping("/meals")
+    public ResponseEntity<?> addMeal(Principal principal,
+                                     @RequestBody @Valid NewUserMealDto userMealDto) {
+        return userProductService.addMeal(userMealDto, principal.getName());
     }
 }

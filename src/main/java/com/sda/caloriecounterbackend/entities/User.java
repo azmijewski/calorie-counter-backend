@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.search.annotations.Field;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
@@ -26,6 +27,7 @@ import java.util.List;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Field(name = "userId")
     private Long id;
     private String username;
     @Email
@@ -45,4 +47,7 @@ public class User {
 
     @OneToMany(mappedBy = "user", orphanRemoval = true)
     private List<UserProduct> userProducts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    private List<Meal> meals = new ArrayList<>();
 }

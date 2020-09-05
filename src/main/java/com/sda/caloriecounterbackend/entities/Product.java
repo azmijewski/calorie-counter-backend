@@ -38,6 +38,9 @@ public class Product {
     @OneToMany(mappedBy = "product", orphanRemoval = true)
     private List<UserProduct> userProducts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", orphanRemoval = true)
+    private List<MealProduct> mealProducts = new ArrayList<>();
+
     public Product(Long id) {
         this.id = id;
     }

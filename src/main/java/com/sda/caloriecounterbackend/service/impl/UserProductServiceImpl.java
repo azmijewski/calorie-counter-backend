@@ -1,12 +1,9 @@
 package com.sda.caloriecounterbackend.service.impl;
 
-import com.sda.caloriecounterbackend.dao.ProductDao;
-import com.sda.caloriecounterbackend.dao.UserDao;
-import com.sda.caloriecounterbackend.dao.UserProductDao;
+import com.sda.caloriecounterbackend.dao.*;
 import com.sda.caloriecounterbackend.dto.*;
-import com.sda.caloriecounterbackend.entities.Product;
-import com.sda.caloriecounterbackend.entities.User;
-import com.sda.caloriecounterbackend.entities.UserProduct;
+import com.sda.caloriecounterbackend.entities.*;
+import com.sda.caloriecounterbackend.exception.MealNotFoundException;
 import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
 import com.sda.caloriecounterbackend.exception.UserNotFoundException;
 import com.sda.caloriecounterbackend.exception.UserProductNotFoundException;
@@ -20,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -31,13 +27,15 @@ public class UserProductServiceImpl implements UserProductService {
     private final UserDao userDao;
     private final ProductDao productDao;
     private final ProductMapper productMapper;
+    private final MealDao mealDao;
 
     public UserProductServiceImpl(UserProductDao userProductDao, UserDao userDao,
-                                  ProductDao productDao, ProductMapper productMapper) {
+                                  ProductDao productDao, ProductMapper productMapper, MealDao mealDao) {
         this.userProductDao = userProductDao;
         this.userDao = userDao;
         this.productDao = productDao;
         this.productMapper = productMapper;
+        this.mealDao = mealDao;
     }
 
     @Override
@@ -118,6 +116,26 @@ public class UserProductServiceImpl implements UserProductService {
         } catch (UserProductNotFoundException e) {
             log.error(e.getMessage());
             return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<?> addMeal(NewUserMealDto newUsermealDto, String username) {
+        try {
+            User user = userDao.findByUsername(username)
+                    .orElseThrow(() -> new UserNotFoundException("Could not find user with username: " + username));
+            Meal meal = mealDao.getById(newUsermealDto.getMealId())
+                    .orElseThrow(() -> new MealNotFoundException("Could not find meal with id: " + newUsermealDto.getMealId()));
+            meal.getMealProducts().forEach( mealProduct -> {
+                UserProduct userProduct = new UserProduct();
+                userProduct.setProduct(mealProduct.getProduct());
+                userProduct.setWeight(mealProduct.getWeight());
+                userProduct.setUser(user);
+                userProductDao.save(userProduct);
+            });
+        } catch (UserNotFoundException | MealNotFoundException e) {
+            log.error(e.getMessage());
         }
         return ResponseEntity.noContent().build();
     }
