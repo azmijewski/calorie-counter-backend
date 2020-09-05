@@ -14,4 +14,5 @@ import java.util.List;
 public class MealWithProductsDto implements Serializable {
     private MealDto mealDto;
     private List<ProductDto> products = new ArrayList<>();
+
 }

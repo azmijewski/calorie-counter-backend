@@ -125,16 +125,51 @@ public class MealServiceImpl implements MealService {
     @Override
     public ResponseEntity<?> addProductToMeal(Long productId, Long mealId, Double weight) {
         try {
-            Product product = productDao.findById(productId)
-                    .orElseThrow(() -> new ProductNotFoundException("Cloud not find product with id: " + productId));
-            Meal meal = mealDao.getById(mealId)
-                    .orElseThrow(() -> new MealNotFoundException("Could not find meal with id: " + mealId));
-
+            Meal mealToUpdate;
+            Optional<MealProduct> optionalMealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId);
+            if (optionalMealProduct.isPresent()) {
+                MealProduct mealProduct = optionalMealProduct.get();
+                mealProduct.setWeight(mealProduct.getWeight() + weight);
+                mealProductDao.modify(mealProduct);
+                mealToUpdate = mealProduct.getMeal();
+            } else {
+                Product product = productDao.findById(productId)
+                        .orElseThrow(() -> new ProductNotFoundException("Cloud not find product with id: " + productId));
+                Meal meal = mealDao.getById(mealId)
+                        .orElseThrow(() -> new MealNotFoundException("Could not find meal with id: " + mealId));
+                MealProduct mealProduct = new MealProduct();
+                mealProduct.setWeight(weight);
+                mealProduct.setMeal(meal);
+                mealProduct.setProduct(product);
+                mealProductDao.save(mealProduct);
+                mealToUpdate = meal;
+            }
+           updateMealMacro(mealToUpdate);
         } catch (ProductNotFoundException | MealNotFoundException e) {
             log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
+    }
+
+    private void updateMealMacro(Meal mealToUpdate) {
+        double totalCalories = 0D;
+        double totalWhey = 0D;
+        double totalFat = 0D;
+        double totalCarbs = 0D;
+        for (MealProduct mealProduct : mealToUpdate.getMealProducts()) {
+            Double multiplier = mealProduct.getWeight() / 100;
+            Product product = mealProduct.getProduct();
+            totalCalories += product.getCalories() * multiplier;
+            totalWhey += product.getWhey() * multiplier;
+            totalFat += product.getFat() * multiplier;
+            totalCarbs += product.getCarbohydrates() * multiplier;
+        }
+        mealToUpdate.setCalories(totalCalories);
+        mealToUpdate.setCarbohydrates(totalCarbs);
+        mealToUpdate.setFat(totalFat);
+        mealToUpdate.setWhey(totalWhey);
+        mealDao.modify(mealToUpdate);
     }
 
     @Override
@@ -144,6 +179,7 @@ public class MealServiceImpl implements MealService {
                     .orElseThrow(() -> new MealProductNotFoundException("Could not find product with id: "
                             + productId + " in meal with id: " + mealId));
             mealProductDao.delete(mealProduct);
+            updateMealMacro(mealProduct.getMeal());
         } catch (MealProductNotFoundException e) {
             log.error(e.getMessage());
             return ResponseEntity.notFound().build();
@@ -169,10 +205,6 @@ public class MealServiceImpl implements MealService {
     }
     private MealWithProductsDto mapProductsListWithCalculatedData(List<MealProduct> mealProductList, MealDto meal) {
         MealWithProductsDto result = new MealWithProductsDto();
-        Double calories = 0D;
-        Double whey = 0D;
-        Double fat = 0D;
-        Double carbs = 0D;
         List<ProductDto> products = new ArrayList<>();
         for (MealProduct mealProduct : mealProductList) {
             Double multiplier = mealProduct.getWeight() / 100;
@@ -182,15 +214,7 @@ public class MealServiceImpl implements MealService {
             product.setFat(product.getFat() * multiplier);
             product.setWhey(product.getWhey() * multiplier);
             products.add(productMapper.mapToDto(product));
-            calories += product.getCalories();
-            whey += product.getWhey();
-            fat += product.getFat();
-            carbs += product.getCarbohydrates();
         }
-        meal.setCalories(calories);
-        meal.setCarbohydrates(carbs);
-        meal.setFat(fat);
-        meal.setWhey(whey);
         result.setMealDto(meal);
         result.setProducts(products);
         return result;

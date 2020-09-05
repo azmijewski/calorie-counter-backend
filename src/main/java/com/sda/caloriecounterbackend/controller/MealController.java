@@ -1,9 +1,7 @@
 package com.sda.caloriecounterbackend.controller;
 
-import com.sda.caloriecounterbackend.dao.MealDao;
 import com.sda.caloriecounterbackend.dto.*;
 import com.sda.caloriecounterbackend.service.MealService;
-import org.jboss.logging.annotations.Pos;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

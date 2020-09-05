@@ -30,6 +30,10 @@ public class Meal {
     @Field
     private String name;
     private Boolean isDefault;
+    private Double calories;
+    private Double whey;
+    private Double fat;
+    private Double carbohydrates;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
