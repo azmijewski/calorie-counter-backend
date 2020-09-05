@@ -39,6 +39,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public ResponseEntity<Page<ShortArticleDto>> getArticles(int page, int size) {
+        log.info("Getting articles page");
         Page<ShortArticleDto> result = articleDao.getArticlesPage(page, size)
                 .map(articleMapper::mapToShortArticleDto);
         return ResponseEntity.ok(result);
@@ -46,13 +47,14 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public ResponseEntity<ArticleDto> getArticleById(Long articleId) {
+        log.info("Get article with id: {}", articleId);
         ArticleDto articleDto;
         try {
             Article article = articleDao.getArticleById(articleId)
                     .orElseThrow(() -> new ArticleNotFoundException("Could not find article with id:" + articleId));
             articleDto = articleMapper.mapToArticleDto(article);
         } catch (ArticleNotFoundException e){
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(articleDto);
@@ -60,6 +62,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public ResponseEntity<?> saveArticle(ArticleDto articleDto) {
+        log.info("Saving new article");
         Long articleId;
         try {
             Photo photo = photoDao.getById(articleDto.getPhotoId())
@@ -68,7 +71,7 @@ public class ArticleServiceImpl implements ArticleService {
             articleToSave.setPhoto(photo);
             articleId = articleDao.saveArticle(articleToSave).getId();
         } catch (PhotoNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         URI location = responseUriBuilder.buildUri(articleId);

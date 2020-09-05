@@ -34,6 +34,7 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     public ResponseEntity<Resource> getPhoto(Long id) {
+        log.info("Get photo with id: {}", id);
         Resource resource;
         String filename;
         try {
@@ -42,7 +43,7 @@ public class PhotoServiceImpl implements PhotoService {
             filename = photo.getName();
             resource = new ByteArrayResource(photo.getBytes());
         } catch (PhotoNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
 
@@ -55,13 +56,14 @@ public class PhotoServiceImpl implements PhotoService {
 
     @Override
     public ResponseEntity<?> savePhoto(MultipartFile file) {
+        log.info("Saving new photo");
         try {
             Photo photo = new Photo();
             photo.setBytes(file.getBytes());
             photo.setName(file.getOriginalFilename());
             photoDao.savePhoto(photo);
         } catch (IOException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.noContent().build();
