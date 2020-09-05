@@ -42,6 +42,7 @@ public class UserProductServiceImpl implements UserProductService {
 
     @Override
     public ResponseEntity<?> addProduct(NewUserProductDto userProductDto, String username) {
+        log.info("Add new product");
         try {
             Optional<UserProduct> userProductInDb =
                     userProductDao.findByUsernameAndDateAndProductId(username, userProductDto.getDate(), userProductDto.getProductId());
@@ -51,10 +52,10 @@ public class UserProductServiceImpl implements UserProductService {
                 addNewProduct(userProductDto, username);
             }
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (ProductNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
@@ -63,6 +64,7 @@ public class UserProductServiceImpl implements UserProductService {
 
     @Override
     public ResponseEntity<UserProductsListDto> getAllByDate(LocalDate date, String username) {
+        log.info("Getting user products from date");
         UserProductsListDto userProductsListDto = new UserProductsListDto();
         try {
             List<UserProduct> userProducts = userProductDao.findAllByDateAndUsername(date, username);
@@ -76,7 +78,7 @@ public class UserProductServiceImpl implements UserProductService {
             userProductsListDto.setDifference(calorieGoal - totalCalories);
             userProductsListDto.setProducts(products);
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
@@ -85,13 +87,14 @@ public class UserProductServiceImpl implements UserProductService {
 
     @Override
     public ResponseEntity<?> removeProduct(DeleteUserProductDto deleteUserProductDto, String username) {
+        log.info("Remove products");
         try {
             UserProduct userProduct
                     = userProductDao.findByUsernameAndDateAndProductId(username, deleteUserProductDto.getDate(), deleteUserProductDto.getProductId())
                     .orElseThrow(() -> new UserProductNotFoundException("Could not find user-product"));
             userProductDao.remove(userProduct);
         } catch (UserProductNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
@@ -99,6 +102,7 @@ public class UserProductServiceImpl implements UserProductService {
 
     @Override
     public ResponseEntity<?> modifyUserProduct(ModifyUserProductDto modifyUserProductDto, String username) {
+        log.info("Modify products by user");
         if (modifyUserProductDto.getNewWeight() == 0) {
             DeleteUserProductDto deleteUserProductDto = new DeleteUserProductDto();
             deleteUserProductDto.setDate(modifyUserProductDto.getDate());
@@ -112,7 +116,7 @@ public class UserProductServiceImpl implements UserProductService {
             userProduct.setWeight(modifyUserProductDto.getNewWeight());
             userProductDao.modify(userProduct);
         } catch (UserProductNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();

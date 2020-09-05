@@ -54,12 +54,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<UserDto> getUserByUsername(String username) {
+        log.info("Getting username");
         UserDto userDto;
         try {
             User user = findByUsername(username);
             userDto = userMapper.mapToDto(user);
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.ok(userDto);
@@ -69,6 +70,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto findById(Long userId) {
+        log.info("Find user by id: {}", userId);
         User user = userDao.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Could not find user with id: " + userId));
         return userMapper.mapToDto(user);
@@ -76,6 +78,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> findAll() {
+        log.info("Find all users");
         return userDao.getAll().stream()
                 .map(userMapper::mapToDto)
                 .collect(Collectors.toList());
@@ -83,6 +86,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> modify(UserDto user, String username) {
+        log.info("Modify user account");
         try {
             User userToModify = findByUsername(username);
             userToModify.setCalorie(user.getCalorie());
@@ -93,7 +97,7 @@ public class UserServiceImpl implements UserService {
             userToModify.setWeight(user.getWeight());
             userDao.modify(userToModify);
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.noContent().build();
@@ -102,6 +106,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> delete(String username, String password) {
+        log.info("Delete user");
         try {
             User userToDelete = findByUsername(username);
             if (passwordEncoder.matches(password, userToDelete.getPassword())) {
@@ -110,10 +115,10 @@ public class UserServiceImpl implements UserService {
                 throw new IncorrectPasswordException();
             }
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IncorrectPasswordException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
         return ResponseEntity.noContent().build();
@@ -122,6 +127,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> register(UserDto userDto) {
+        log.info("Register new user");
         if(userDao.existByLoginOrMail(userDto.getUsername(), userDto.getEmail())){
             log.error("User with login: {}, or email: {} already exist", userDto.getUsername(), userDto.getEmail());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -143,6 +149,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> confirm(String token) {
+        log.info("Confirm new user");
         try {
             User userToConfirmed = userDao.findByToken(token)
                     .orElseThrow(() -> new UserNotFoundException("Could not find user with token: " + token));
@@ -150,7 +157,7 @@ public class UserServiceImpl implements UserService {
             userToConfirmed.setToken(null);
             userDao.modify(userToConfirmed);
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
@@ -158,6 +165,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<?> changePassword(String newPassword, String oldPassword, String username) {
+        log.info("Change user password");
         try {
             User userToChangePassword = findByUsername(username);
             if (passwordEncoder.matches(oldPassword, userToChangePassword.getPassword())) {
@@ -168,10 +176,10 @@ public class UserServiceImpl implements UserService {
                 throw new IncorrectPasswordException();
             }
         } catch (UserNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IncorrectPasswordException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
         return ResponseEntity.noContent().build();

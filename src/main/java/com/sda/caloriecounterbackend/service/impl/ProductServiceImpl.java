@@ -38,13 +38,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseEntity<ProductDto> getById(Long id) {
+        log.info("Get products by id: {}", id);
         ProductDto productDto;
         try {
             Product product = productDao.findById(id)
                     .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + id));
             productDto = productMapper.mapToDto(product);
         } catch (ProductNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(productDto);
@@ -53,6 +54,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseEntity<Page<ProductDto>> getProductsPage(int page, int size) {
+        log.info("Get products page");
         Page<ProductDto> products = productDao.findAll(page, size)
                 .map(productMapper::mapToDto);
         return ResponseEntity.ok(products);
@@ -60,22 +62,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseEntity<Page<ProductDto>> searchProducts(int page, int size, String search) {
+        log.info("Search products by: {}", search);
         Page<ProductDto> products;
         try{
             String[] searchWords = getSearchWords(search);
             products = productSearchDao.findByCriteria(searchWords, page, size)
                     .map(productMapper::mapToDto);
         } catch (IllegalArgumentException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-
 
         return ResponseEntity.ok(products);
     }
 
     @Override
     public ResponseEntity<?> save(ProductDto productDto) {
+        log.info("Saving new product");
         Product productToSave = productMapper.mapToDb(productDto);
         Long resultId = productDao.save(productToSave)
                 .getId();
@@ -85,12 +88,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseEntity<?> delete(Long id) {
+        log.info("Delete id: {}", id);
         try {
             Product productToDelete = productDao.findById(id)
                     .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + id));
             productDao.delete(productToDelete);
         } catch (ProductNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
@@ -98,13 +102,14 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ResponseEntity<?> modify(Long id, ProductDto productDto) {
+        log.info("Modify by id: {}", id);
         try {
             Product productToModify = productDao.findById(id)
                     .orElseThrow(() -> new ProductNotFoundException("Could not find product with id: " + id));
             productMapper.mapDataToUpdate(productToModify, productDto);
             productDao.update(productToModify);
         } catch (ProductNotFoundException e) {
-            log.error(e);
+            log.error(e.getMessage());
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build();
