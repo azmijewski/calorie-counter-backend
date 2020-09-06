@@ -13,6 +13,6 @@ import java.util.List;
 @Data
 public class MealWithProductsDto implements Serializable {
     private MealDto mealDto;
-    private List<ProductDto> products = new ArrayList<>();
+    private List<UserProductDto> products = new ArrayList<>();
 
 }

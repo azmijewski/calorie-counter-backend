@@ -7,6 +7,7 @@ import com.sda.caloriecounterbackend.dao.UserDao;
 import com.sda.caloriecounterbackend.dto.MealDto;
 import com.sda.caloriecounterbackend.dto.MealWithProductsDto;
 import com.sda.caloriecounterbackend.dto.ProductDto;
+import com.sda.caloriecounterbackend.dto.UserProductDto;
 import com.sda.caloriecounterbackend.entities.Meal;
 import com.sda.caloriecounterbackend.entities.MealProduct;
 import com.sda.caloriecounterbackend.entities.Product;
@@ -205,7 +206,7 @@ public class MealServiceImpl implements MealService {
     }
     private MealWithProductsDto mapProductsListWithCalculatedData(List<MealProduct> mealProductList, MealDto meal) {
         MealWithProductsDto result = new MealWithProductsDto();
-        List<ProductDto> products = new ArrayList<>();
+        List<UserProductDto> products = new ArrayList<>();
         for (MealProduct mealProduct : mealProductList) {
             Double multiplier = mealProduct.getWeight() / 100;
             Product product = mealProduct.getProduct();
@@ -213,7 +214,7 @@ public class MealServiceImpl implements MealService {
             product.setCarbohydrates(product.getCarbohydrates() * multiplier);
             product.setFat(product.getFat() * multiplier);
             product.setWhey(product.getWhey() * multiplier);
-            products.add(productMapper.mapToDto(product));
+            products.add(productMapper.mapToUserProductDto(product, mealProduct.getWeight()));
         }
         result.setMealDto(meal);
         result.setProducts(products);
