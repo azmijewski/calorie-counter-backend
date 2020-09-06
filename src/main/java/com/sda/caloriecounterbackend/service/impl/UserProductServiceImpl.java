@@ -128,11 +128,18 @@ public class UserProductServiceImpl implements UserProductService {
             Meal meal = mealDao.getById(newUsermealDto.getMealId())
                     .orElseThrow(() -> new MealNotFoundException("Could not find meal with id: " + newUsermealDto.getMealId()));
             meal.getMealProducts().forEach( mealProduct -> {
-                UserProduct userProduct = new UserProduct();
-                userProduct.setProduct(mealProduct.getProduct());
-                userProduct.setWeight(mealProduct.getWeight());
-                userProduct.setUser(user);
-                userProductDao.save(userProduct);
+                Optional<UserProduct> userProductInDb =
+                        userProductDao.findByUsernameAndDateAndProductId(username, newUsermealDto.getDate(), mealProduct.getProduct().getId());
+                if (userProductInDb.isPresent()) {
+                    editUserProduct(userProductInDb.get(), mealProduct.getWeight());
+                } else {
+                    UserProduct userProduct = new UserProduct();
+                    userProduct.setProduct(mealProduct.getProduct());
+                    userProduct.setWeight(mealProduct.getWeight());
+                    userProduct.setUser(user);
+                    userProduct.getId().setDate(newUsermealDto.getDate());
+                    userProductDao.save(userProduct);
+                }
             });
         } catch (UserNotFoundException | MealNotFoundException e) {
             log.error(e.getMessage());

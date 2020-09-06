@@ -126,13 +126,11 @@ public class MealServiceImpl implements MealService {
     @Override
     public ResponseEntity<?> addProductToMeal(Long productId, Long mealId, Double weight) {
         try {
-            Meal mealToUpdate;
             Optional<MealProduct> optionalMealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId);
             if (optionalMealProduct.isPresent()) {
                 MealProduct mealProduct = optionalMealProduct.get();
                 mealProduct.setWeight(mealProduct.getWeight() + weight);
                 mealProductDao.modify(mealProduct);
-                mealToUpdate = mealProduct.getMeal();
             } else {
                 Product product = productDao.findById(productId)
                         .orElseThrow(() -> new ProductNotFoundException("Cloud not find product with id: " + productId));
@@ -142,10 +140,10 @@ public class MealServiceImpl implements MealService {
                 mealProduct.setWeight(weight);
                 mealProduct.setMeal(meal);
                 mealProduct.setProduct(product);
+                meal.getMealProducts().add(mealProduct);
                 mealProductDao.save(mealProduct);
-                mealToUpdate = meal;
             }
-           updateMealMacro(mealToUpdate);
+            updateMealMacro(mealId);
         } catch (ProductNotFoundException | MealNotFoundException e) {
             log.error(e.getMessage());
             return ResponseEntity.notFound().build();
@@ -153,7 +151,44 @@ public class MealServiceImpl implements MealService {
         return ResponseEntity.noContent().build();
     }
 
-    private void updateMealMacro(Meal mealToUpdate) {
+
+    @Override
+    public ResponseEntity<?> deleteProductFromMeal(Long productId, Long mealId) {
+        try {
+            MealProduct mealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId)
+                    .orElseThrow(() -> new MealProductNotFoundException("Could not find product with id: "
+                            + productId + " in meal with id: " + mealId));
+            mealProductDao.delete(mealProduct);
+            updateMealMacro(mealId);
+        } catch (MealProductNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<?> modifyProductWeightInMeal(Long productId, Long mealId, Double newWeight) {
+        if (newWeight == 0) {
+            return deleteProductFromMeal(productId, mealId);
+        }
+        try {
+            MealProduct mealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId)
+                    .orElseThrow(() -> new MealProductNotFoundException("Could not find product with id: "
+                            + productId + " in meal with id: " + mealId));
+            mealProduct.setWeight(newWeight);
+            mealProductDao.modify(mealProduct);
+            updateMealMacro(mealId);
+        } catch (MealProductNotFoundException e) {
+            log.error(e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    private void updateMealMacro(Long mealId) {
+        Meal mealToUpdate = mealDao.getById(mealId)
+                .orElseThrow(() -> new MealNotFoundException("Could not find meal with id: " + mealId));
         double totalCalories = 0D;
         double totalWhey = 0D;
         double totalFat = 0D;
@@ -173,37 +208,6 @@ public class MealServiceImpl implements MealService {
         mealDao.modify(mealToUpdate);
     }
 
-    @Override
-    public ResponseEntity<?> deleteProductFromMeal(Long productId, Long mealId) {
-        try {
-            MealProduct mealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId)
-                    .orElseThrow(() -> new MealProductNotFoundException("Could not find product with id: "
-                            + productId + " in meal with id: " + mealId));
-            mealProductDao.delete(mealProduct);
-            updateMealMacro(mealProduct.getMeal());
-        } catch (MealProductNotFoundException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    public ResponseEntity<?> modifyProductWeightInMeal(Long productId, Long mealId, Double newWeight) {
-        if (newWeight == 0) {
-            return deleteProductFromMeal(productId, mealId);
-        }
-        try {
-            MealProduct mealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId)
-                    .orElseThrow(() -> new MealProductNotFoundException("Could not find product with id: "
-                            + productId + " in meal with id: " + mealId));
-            mealProduct.setWeight(newWeight);
-        } catch (MealProductNotFoundException e) {
-            log.error(e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build();
-    }
     private MealWithProductsDto mapProductsListWithCalculatedData(List<MealProduct> mealProductList, MealDto meal) {
         MealWithProductsDto result = new MealWithProductsDto();
         List<UserProductDto> products = new ArrayList<>();
