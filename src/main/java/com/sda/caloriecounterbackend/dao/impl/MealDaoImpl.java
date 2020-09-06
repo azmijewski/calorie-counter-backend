@@ -38,6 +38,7 @@ public class MealDaoImpl implements MealDao {
     @Override
     public Optional<Meal> getById(Long id) {
       Query query = em.createNamedQuery("meal.FindByIdJoinProducts");
+      query.setParameter("id", id);
       try {
           Meal meal = (Meal) query.getSingleResult();
           return Optional.of(meal);
