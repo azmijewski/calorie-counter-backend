@@ -6,13 +6,15 @@ import com.sda.caloriecounterbackend.dao.ProductDao;
 import com.sda.caloriecounterbackend.dao.UserDao;
 import com.sda.caloriecounterbackend.dto.MealDto;
 import com.sda.caloriecounterbackend.dto.MealWithProductsDto;
-import com.sda.caloriecounterbackend.dto.ProductDto;
 import com.sda.caloriecounterbackend.dto.UserProductDto;
 import com.sda.caloriecounterbackend.entities.Meal;
 import com.sda.caloriecounterbackend.entities.MealProduct;
 import com.sda.caloriecounterbackend.entities.Product;
 import com.sda.caloriecounterbackend.entities.User;
-import com.sda.caloriecounterbackend.exception.*;
+import com.sda.caloriecounterbackend.exception.MealNotFoundException;
+import com.sda.caloriecounterbackend.exception.MealProductNotFoundException;
+import com.sda.caloriecounterbackend.exception.ProductNotFoundException;
+import com.sda.caloriecounterbackend.exception.UserNotFoundException;
 import com.sda.caloriecounterbackend.mapper.MealMapper;
 import com.sda.caloriecounterbackend.mapper.ProductMapper;
 import com.sda.caloriecounterbackend.service.MealService;
@@ -56,7 +58,7 @@ public class MealServiceImpl implements MealService {
     }
 
     @Override
-    public ResponseEntity<Page<MealDto>> getDefaultAndUserProducts(String username, int page, int size) {
+    public ResponseEntity<Page<MealDto>> getDefaultAndUserMeals(String username, int page, int size) {
         Page<MealDto> result = mealDao.getUserAndDefault(username, page, size)
                 .map(mealMapper::mapToDto);
         return ResponseEntity.ok(result);
@@ -82,7 +84,7 @@ public class MealServiceImpl implements MealService {
         Long resultId;
         try {
             User user = userDao.findByUsername(username)
-                    .orElseThrow(() -> new UserProductNotFoundException("Could not find user: " + username));
+                    .orElseThrow(() -> new UserNotFoundException("Could not find user: " + username));
             Meal meal = mealMapper.mapToDb(mealDto);
             meal.setIsDefault(false);
             meal.setUser(user);
@@ -126,6 +128,9 @@ public class MealServiceImpl implements MealService {
     @Override
     public ResponseEntity<?> addProductToMeal(Long productId, Long mealId, Double weight) {
         try {
+            if (weight == 0) {
+                return ResponseEntity.noContent().build();
+            }
             Optional<MealProduct> optionalMealProduct = mealProductDao.getByProductIdAndMealId(productId, mealId);
             if (optionalMealProduct.isPresent()) {
                 MealProduct mealProduct = optionalMealProduct.get();
@@ -211,7 +216,7 @@ public class MealServiceImpl implements MealService {
     private MealWithProductsDto mapProductsListWithCalculatedData(List<MealProduct> mealProductList, MealDto meal) {
         MealWithProductsDto result = new MealWithProductsDto();
         List<UserProductDto> products = new ArrayList<>();
-        for (MealProduct mealProduct : mealProductList) {
+        mealProductList.forEach(mealProduct -> {
             Double multiplier = mealProduct.getWeight() / 100;
             Product product = mealProduct.getProduct();
             product.setCalories(product.getCalories() * multiplier);
@@ -219,7 +224,7 @@ public class MealServiceImpl implements MealService {
             product.setFat(product.getFat() * multiplier);
             product.setWhey(product.getWhey() * multiplier);
             products.add(productMapper.mapToUserProductDto(product, mealProduct.getWeight()));
-        }
+        });
         result.setMealDto(meal);
         result.setProducts(products);
         return result;

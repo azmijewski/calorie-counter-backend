@@ -42,6 +42,9 @@ public class UserProductServiceImpl implements UserProductService {
     public ResponseEntity<?> addProduct(NewUserProductDto userProductDto, String username) {
         log.info("Add new product");
         try {
+            if(userProductDto.getWeight() == 0) {
+                return ResponseEntity.noContent().build();
+            }
             Optional<UserProduct> userProductInDb =
                     userProductDao.findByUsernameAndDateAndProductId(username, userProductDto.getDate(), userProductDto.getProductId());
             if (userProductInDb.isPresent()) {
@@ -143,6 +146,7 @@ public class UserProductServiceImpl implements UserProductService {
             });
         } catch (UserNotFoundException | MealNotFoundException e) {
             log.error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         return ResponseEntity.noContent().build();
     }

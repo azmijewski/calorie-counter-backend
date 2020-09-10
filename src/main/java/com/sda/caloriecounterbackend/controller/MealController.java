@@ -24,7 +24,7 @@ public class MealController {
     public ResponseEntity<Page<MealDto>> getMeals(Principal principal,
                                                   @RequestParam(name = "page") int page,
                                                   @RequestParam(name = "size") int size) {
-        return mealService.getDefaultAndUserProducts(principal.getName(), page, size);
+        return mealService.getDefaultAndUserMeals(principal.getName(), page, size);
     }
     @GetMapping("/{mealId}")
     public ResponseEntity<MealWithProductsDto> getMealById(@PathVariable(name = "mealId") Long mealId) {

@@ -4,6 +4,8 @@ import com.sda.caloriecounterbackend.dto.MailDataDto;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import javax.validation.constraints.NotNull;
+
 @Component
 public class QueueListeners {
 
@@ -14,7 +16,7 @@ public class QueueListeners {
     }
 
     @RabbitListener(queues = "mailQueue")
-    public void registerUserMailSender(MailDataDto mailDataDto) {
+    public void registerUserMailSender(@NotNull MailDataDto mailDataDto) {
         this.customMailSender.sendMail(mailDataDto.getTo(), mailDataDto.getTopic(), mailDataDto.getContent());
     }
 }
